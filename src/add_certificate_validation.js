@@ -1,8 +1,12 @@
 const express = require("express");
 const app = express();
 app.use(express.json());
+const searchRoutes = require("./search");
+
 
 let certificates = [];
+app.locals.certificates = certificates;
+
 
 // Helper for empty check
 const isEmpty = v => !v || v.toString().trim() === "";
@@ -115,6 +119,7 @@ app.put("/api/update/:id", (req, res) => {
 });
 
 
+app.use("/api/user", searchRoutes);
 
 // Server
 app.listen(3000, () => console.log("Server running on port 3000"));
