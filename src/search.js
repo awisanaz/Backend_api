@@ -1,49 +1,53 @@
 const express = require("express");
 const router = express.Router();
+const CertiData = require("./models/CertiData");
 
-router.get("/search", (req, res) => {
-    const certificates = req.app.locals.certificates;
-
+// ======================== SEARCH CERTIFICATE ========================
+router.get("/search", async (req, res) => {
+  try {
     const { certificateSerial, name, courseType } = req.query;
 
-    // Starting point of results = all certificates
-    let results = certificates;
+    let query = {};
 
-    // 🔹 1) Filter by Course Type (select box)
-    if (courseType && courseType.trim() !== "") {
-        const typeLower = courseType.toLowerCase().trim();
-        results = results.filter(
-            c => c.courseType.toLowerCase() === typeLower
-        );
+    // 🔎 Course Type Search
+    if (courseType) {
+      query.courseType = {
+        $regex: `^${courseType.trim()}$`,
+        $options: "i"   // case-insensitive
+      };
     }
 
-    // 🔹 2) Filter by Certificate Serial (input)
-    if (certificateSerial && certificateSerial.trim() !== "") {
-        if (!/^[0-9]{6}$/.test(certificateSerial)) {
-            return res.status(400).json({ 
-                data: "Certificate Serial must be exactly 6 digits" 
-            });
-        }
-
-        results = results.filter(
-            c => c.certificateSerial === certificateSerial
-        );
+    // 🔎 Certificate Serial Search
+    if (certificateSerial) {
+      if (!/^[0-9]{6}$/.test(certificateSerial)) {
+        return res.status(400).json({
+          data: "Certificate Serial must be exactly 6 digits"
+        });
+      }
+      query.certificateSerial = certificateSerial;
     }
 
-    // 🔹 3) Filter by Name (input)
-    if (name && name.trim() !== "") {
-        const lowerName = name.toLowerCase().trim();
-        results = results.filter(
-            c => c.name.toLowerCase().includes(lowerName)
-        );
+    // 🔎 Name Search (partial match)
+    if (name) {
+      query.name = {
+        $regex: name.trim(),
+        $options: "i"
+      };
     }
 
-    // If still no result
-    if (!results || results.length === 0) {
-        return res.status(404).json({ data: "No matching certificate found" });
+    const results = await CertiData.find(query);
+
+    if (results.length === 0) {
+      return res.status(404).json({
+        data: "No matching certificate found"
+      });
     }
 
-    return res.json({ data: results });
+    res.json({ data: results });
+
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 });
 
 module.exports = router;
