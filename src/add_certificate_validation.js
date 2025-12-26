@@ -1,12 +1,13 @@
 const express = require("express");
 const router = express.Router();
 const CertiData = require("./models/CertiData");
+const authMiddleware = require("./middleware/authMiddleware");
 
 // Helper
 const isEmpty = v => !v || v.toString().trim() === "";
 
 // ======================== ADD CERTIFICATE ========================
-router.post("/add", async (req, res) => {
+router.post("/add", authMiddleware, async (req, res) => {
   try {
     const required = [
       "name", "courseType", "joiningDate",
@@ -48,7 +49,7 @@ router.post("/add", async (req, res) => {
 });
 
 // ======================== VIEW ALL CERTIFICATES ========================
-router.get("/view/list", async (req, res) => {
+router.get("/view/list",  authMiddleware, async (req, res) => {
   try {
     const certificates = await CertiData.find();
     res.json({ data: certificates });
@@ -58,7 +59,7 @@ router.get("/view/list", async (req, res) => {
 });
 
 // ======================== VIEW ONE CERTIFICATE ========================
-router.get("/view/:id", async (req, res) => {
+router.get("/view/:id",  authMiddleware, async (req, res) => {
   try {
     const cert = await CertiData.findById(req.params.id);
     if (!cert) {
@@ -71,7 +72,7 @@ router.get("/view/:id", async (req, res) => {
 });
 
 // ======================== DELETE CERTIFICATE ========================
-router.delete("/delete/:id", async (req, res) => {
+router.delete("/delete/:id", authMiddleware, async (req, res) => {
   try {
     const cert = await CertiData.findByIdAndDelete(req.params.id);
     if (!cert) {
@@ -84,7 +85,7 @@ router.delete("/delete/:id", async (req, res) => {
 });
 
 // ======================== UPDATE CERTIFICATE ========================
-router.put("/update/:id", async (req, res) => {
+router.put("/update/:id", authMiddleware, async (req, res) => {
   try {
     const cert = await CertiData.findByIdAndUpdate(
       req.params.id,
